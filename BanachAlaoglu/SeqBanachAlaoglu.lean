@@ -1,5 +1,6 @@
 
 import BanachAlaoglu.Metrizability
+--import BanachAlaoglu.BanachAlaoglu
 import Mathlib.Topology.Algebra.UniformField
 import Mathlib.Analysis.Normed.Module.WeakDual
 import Mathlib.Topology.Defs.Filter
@@ -59,15 +60,18 @@ theorem ContinuousLinearMap.isSeqCompact_closure_image_coe_of_bounded [ProperSpa
 -/
 
 variable (𝕜 : Type*) [NontriviallyNormedField 𝕜] [ProperSpace 𝕜]
-variable (V : Type*) [SeminormedAddCommGroup V] [NormedSpace 𝕜 V]
-variable [TopologicalSpace.SeparableSpace V]
-variable (K : Set (WeakDual 𝕜 V)) (K_cpt : IsCompact K)
+variable (V : Type*) [SeminormedAddCommGroup V] --[NormedSpace 𝕜 V]
+variable [TopologicalSpace.SeparableSpace V] [NormedSpace 𝕜 E]
+--variable (K : Set (WeakDual 𝕜 V)) (K_cpt : IsCompact K)
 
 
 theorem isSeqCompact_image_coe_of_bounded_of_closed_image [ProperSpace F] {s : Set (E' →SL[σ₁₂] F)}
     (hb : Bornology.IsBounded s) (hc : IsClosed (((↑) : (E' →SL[σ₁₂] F) → E' → F) '' s)) :
     IsSeqCompact (((↑) : (E' →SL[σ₁₂] F) → E' → F) '' s) := by
-  --exact hc.closure_eq ▸ ContinuousLinearMap.isSeqCompact_closure_image_coe_of_bounded hb
+  --have := ContinuousLinearMap.isSeqCompact_closure_image_coe_of_bounded (𝕜₂ := E)
+
+
+  --have := hc.closure_eq ▸ ContinuousLinearMap.isSeqCompact_closure_image_coe_of_bounded hb
   sorry
 
 
