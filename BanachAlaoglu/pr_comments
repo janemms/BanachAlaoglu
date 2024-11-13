@@ -1,0 +1,7 @@
+- Don't use PseudoMetricCopy/MetricCopy.
+- Define ourTopologicalSpace/ourPseudoMetricSpace/ourMetricSpace. I think you need to first define ourPseudoMetricSpace then ourTopologicalSpace in terms of it.
+- Prove that Continuous[t₀, ourTopologicalSpace] id where t₀ : TopologicalSpace X.
+- Conclude t₀ = ourTopologicalSpace, or maybe construct a @Homeomorph X X t₀ ourTopologicalSpace. Not sure which one is most practical.
+- Deduce t₀ is (pseudo-)metrizable.
+
+- You want to have two TopologicalSpace X instances, namely t₀ and ourTopologicalSpace. And you disambiguate between the two by using the Continuous[_, _], IsOpen[_], etc... notations

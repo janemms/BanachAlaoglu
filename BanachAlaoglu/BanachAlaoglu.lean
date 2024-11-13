@@ -147,9 +147,7 @@ lemma ourMetric_triangle : ∀ x y z : X, ourMetric gs x z ≤ ourMetric gs x y 
 
 noncomputable def ourMetricSpace : MetricSpace X where
   dist := ourMetric gs
-  dist_self := by
-    intro x
-    exact (ourMetric_self_iff gs_sep ).mpr rfl
+  dist_self x := by exact (ourMetric_self_iff gs_sep ).mpr rfl
   dist_comm := ourMetric_comm
   dist_triangle := ourMetric_triangle
   edist_dist := by simp only [← ENNReal.ofReal_coe_nnreal, NNReal.coe_mk, implies_true]
