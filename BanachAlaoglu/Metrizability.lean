@@ -223,7 +223,6 @@ def t₀ := TopologicalSpace X
 variable (t₀ : TopologicalSpace X)
 
 /- Define a function from `TopologicalSpace X` to `ourTopologicalSpace`-/
---
 
 #check PseudoMetricSpace X
 --#check Continuous[t₀, (ourTopologicalSpace gs)] id
@@ -248,16 +247,19 @@ lemma continuous_ourMetric (gs_continuous : ∀ n, Continuous (gs n)) :
   --  dist (id p.1) (id p.2)) :=
  -- continuous_ourMetric gs_continuous
 
-
-
+#check (@Metric.continuous_iff' X X)
+#check continuous_def
 lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id := by
   have := @ourPseudoMetricSpace X E _ gs
   have := @ourTopologicalSpace X E _ gs
   have := (@continuous_iff_continuous_dist X X _ _ id).mpr --ourPseudoMetricSpace
 
   have := (@Metric.continuous_iff' X X (@ourPseudoMetricSpace X E _ gs) t₀ id).mpr
-  rename_i inst inst_1 inst_2 this_1 this_2 this_3
+
   simp_all only [id_eq, gt_iff_lt]
+
+  rw [continuous_def]
+  intro X X_open
 
   --intro x ε hε
   --have cont_dist : Continuous (fun y ↦ dist (kopio.mk X gs gs_sep y)
@@ -268,8 +270,8 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
   --have := @IsOpen.mem_nhds X x _ _ (cont_dist.isOpen_preimage _ interval_open) (by simpa using hε)
   --filter_upwards [this] with y hy using hy
 
-  apply continuous_def.mpr
-  intro s s_open
+  --apply continuous_def.mpr
+  --intro s s_open
 
   simp_all only [gt_iff_lt, id_eq, Set.preimage_id_eq]
 
