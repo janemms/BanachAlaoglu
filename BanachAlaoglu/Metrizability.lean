@@ -223,6 +223,7 @@ def t₀ := TopologicalSpace X
 variable (t₀ : TopologicalSpace X)
 
 /- Define a function from `TopologicalSpace X` to `ourTopologicalSpace`-/
+--
 
 #check PseudoMetricSpace X
 --#check Continuous[t₀, (ourTopologicalSpace gs)] id
