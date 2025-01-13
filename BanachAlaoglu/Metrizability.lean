@@ -243,24 +243,67 @@ lemma continuous_ourMetric (gs_continuous : ∀ n, Continuous (gs n)) :
   rw [abs_of_nonneg (by positivity)]
   exact min_le_right _ _
 
---lemma continuous_ourMetric' (gs_continuous : ∀ n, Continuous (gs n)) :
-   -- Continuous (fun (p : X × X) ↦
-  --  dist (id p.1) (id p.2)) :=
- -- continuous_ourMetric gs_continuous
+#check (@instTopologicalSpaceProd X X (@ourTopologicalSpace X E _ gs) (@ourTopologicalSpace X E _ gs))
+#check @dist X
+#check @Continuous (X × X) ℝ (@instTopologicalSpaceProd X X (@ourTopologicalSpace X E _ gs) (@ourTopologicalSpace X E _ gs)) _ (fun (p : X × X) ↦ dist (p.1) (p.2))
+
+lemma continuous_ourMetric' (gs_continuous : ∀ n, Continuous (gs n)) :
+    Continuous  (fun (p : X × X) ↦ ourMetric gs (p.1) (p.2)) := by
+  exact @continuous_ourMetric X E _ gs t₀ gs_continuous
+
 
 #check (@Metric.continuous_iff' X X)
 #check continuous_def
 lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id := by
-  have := @ourPseudoMetricSpace X E _ gs
-  have := @ourTopologicalSpace X E _ gs
-  have := (@continuous_iff_continuous_dist X X _ _ id).mpr --ourPseudoMetricSpace
+  --have := @ourPseudoMetricSpace X E _ gs
+  --have := @ourTopologicalSpace X E _ gs
+  --have := (@continuous_iff_continuous_dist X X _ _ id).mpr --ourPseudoMetricSpace
 
-  have := (@Metric.continuous_iff' X X (@ourPseudoMetricSpace X E _ gs) t₀ id).mpr
+--  have := (@Metric.continuous_iff' X X (@ourPseudoMetricSpace X E _ gs) t₀ id).mpr
 
-  simp_all only [id_eq, gt_iff_lt]
+ --simp_all only [id_eq, gt_iff_lt]
 
   rw [continuous_def]
-  intro X X_open
+
+  intro s s_open
+  have : @IsOpen X (ourTopologicalSpace gs) s = ∀ x ∈ s, ∃ ε > 0, ∀ (y : X), ourMetric gs x y < ε → y ∈ s := by
+    exact rfl
+  rw [this] at s_open
+  rw [isOpen_iff_forall_mem_open]
+  intro x hx
+  specialize s_open x hx
+  rcases s_open with ⟨ε, ε_pos, h_metric⟩
+  let t := { y | ourMetric gs x y < ε }
+  use t
+  constructor
+  · intros y hy
+    simp only [Set.mem_preimage]
+    exact h_metric y hy
+
+  · constructor
+    ·
+      have metric_cont := continuous_ourMetric gs t₀
+      simp_all only [ne_eq, gt_iff_lt, eq_iff_iff, Set.preimage_id_eq, id_eq, t]
+      specialize h_metric
+
+      have := @continuous_ourMetric' X E _ gs
+      let dist_fun : X → ℝ := fun y ↦ ourMetric gs x y
+      have dist_cont : Continuous dist_fun := by
+        simp [dist_fun]
+
+        sorry
+      exact dist_cont.isOpen_preimage (Set.Iio ε) (@isOpen_Iio _ _ _ _ ε)
+
+    · have x_in_t : x ∈ t := by
+        simp [t]
+        have metric_self : ourMetric gs x x = 0 := by
+          exact @ourMetric_self X E _ gs x x rfl
+        exact lt_of_eq_of_lt metric_self ε_pos
+        --rw [metric_self]
+      exact x_in_t
+
+
+  -- Use the fact that `ourMetric gs x x = 0`
 
   --intro x ε hε
   --have cont_dist : Continuous (fun y ↦ dist (kopio.mk X gs gs_sep y)
@@ -274,12 +317,11 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
   --apply continuous_def.mpr
   --intro s s_open
 
-  simp_all only [gt_iff_lt, id_eq, Set.preimage_id_eq]
 
 
   --have := @continuous_id X _
 
-  sorry
+
 --lemma continuous_function : Continuous[t₀, ourTopologicalSpace] id := by sorry
 
 --#check Continuous[t₀, ourTopologicalSpace]
@@ -296,7 +338,39 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
 
 
   have := continuous_iff_isClosed.mpr closed_impl
+  have : @IsClosed X (ourTopologicalSpace gs) (id ⁻¹' M) := by
+      --simp only [symm M]
 
+      have M_image_cpt : @IsCompact X (ourTopologicalSpace gs) (M) := by
+        rw [@isCompact_iff_finite_subcover]
+        have M_cpt_X := @IsClosed.isCompact X t₀ M
+        simp_all only [ne_eq, Set.preimage_id_eq, id_eq, implies_true]
+
+      specialize this M
+      simp only [Set.preimage_id_eq, id_eq] at *
+      specialize blah M
+      have := @IsCompact.isClosed X (ourTopologicalSpace gs) (?_) M M_image_cpt
+      exact this
+      · rw [t2Space_iff]
+        intro x y x_ne_y
+        let d := ourMetric gs x y
+        have d_pos : 0 < d := by
+          unfold_let
+          rw [ourMetric]
+          apply tsum_pos
+          · exact summable_if_bounded
+          · intro i
+            positivity
+          · have (a b : ℝ) ( ha : a > 0) (hb :b > 0) : a * b > 0 := by
+              exact Real.mul_pos ha hb
+            apply Real.mul_pos
+            · positivity
+            ·
+
+              sorry
+
+
+          · exact USize.size
     --have s_cpt_X := IsClosed.isCompact s_closed
   --   rw [isCompact_iff_finite_subcover] at s_cpt_X
   --   have open_preimage s : IsOpen s → IsOpen (metricCopy.mk X gs gs_sep ⁻¹' s) :=

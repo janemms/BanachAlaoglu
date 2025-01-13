@@ -180,9 +180,6 @@ lemma cont_ourMetric (gs_cont : ∀ (n : ℕ), Continuous (gs n)) : Continuous (
       have : Continuous (fun (x,y) ↦ gs i x - gs i y) := by
         exact Continuous.sub (by exact Continuous.fst' (gs_cont i)) (Continuous.snd' ((gs_cont i)))
         --ring_nf at this
-
-
-
       exact Continuous.norm this
     have foo n := @Continuous.min ℝ (X×X) _ _ _ (fun (x,y) ↦ ‖gs n x - gs n y‖) (fun (_,_) ↦ 1) _ (cont_xy n) (continuous_const)
     simp at foo
