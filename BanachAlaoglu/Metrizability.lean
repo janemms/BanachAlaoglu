@@ -220,7 +220,11 @@ noncomputable def ourTopologicalSpace : TopologicalSpace X where
       · simp_all only
 
 def t₀ := TopologicalSpace X
-variable (t₀ : TopologicalSpace X)
+variable (t₀ : TopologicalSpace X) (CompactSpace_t₀ : @CompactSpace X t₀)
+--instance CompactSpace_t₀ : @CompactSpace X t₀ := by
+
+
+
 
 /- Define a function from `TopologicalSpace X` to `ourTopologicalSpace`-/
 --
@@ -288,8 +292,9 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
 
       have := @continuous_ourMetric' X E _ gs
       let dist_fun : X → ℝ := fun y ↦ ourMetric gs x y
-      have dist_cont : Continuous dist_fun := by
+      have dist_cont : @Continuous X ℝ t₀ _ dist_fun := by
         simp [dist_fun]
+
 
         sorry
       exact dist_cont.isOpen_preimage (Set.Iio ε) (@isOpen_Iio _ _ _ _ ε)
@@ -327,28 +332,44 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
 --#check Continuous[t₀, ourTopologicalSpace]
 
 lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀ id := by
-  have ourTopo := @ourTopologicalSpace X E _ gs
+  --have ourTopo := @ourTopologicalSpace X E _ gs
 
 
   --have symm (s : Set X) : continuous_toOrigin X gs gs_sep ⁻¹' s = metricCopy.mk X gs gs_sep '' s :=
     --Eq.symm (Set.EqOn.image_eq_self fun ⦃x⦄ ↦ congrFun rfl)
-  have closed_impl (s : Set X) : IsClosed s → IsClosed (id ⁻¹' s) := by
-    intro s_closed
-    exact s_closed
+  --have closed_impl (s : Set X) : IsClosed s → IsClosed (id ⁻¹' s) := by
+    --intro s_closed
+    --exact s_closed
 
 
-  have := continuous_iff_isClosed.mpr closed_impl
-  have : @IsClosed X (ourTopologicalSpace gs) (id ⁻¹' M) := by
+  --have := continuous_iff_isClosed.mpr closed_impl
+  have : ∀ (s : Set X), @IsClosed X t₀ s → @IsClosed X (ourTopologicalSpace gs) (id ⁻¹'s) := by
+    intro M M_closed
+    --have M_cpt_X := @IsClosed.isCompact --M_closed
+    --rw [isCompact_iff_finite_subcover] at M_cpt_X
+    have : ∀ s : Set X, @IsOpen X (ourTopologicalSpace gs) s → @IsOpen X t₀ (id ⁻¹' s) := by
+      intro s
+      have := continuous_mk gs
+      specialize this t₀
+      rw [continuous_def] at this
+      specialize this s
+      exact this
+
+    have : @IsClosed X (ourTopologicalSpace gs) (id ⁻¹' M) := by
       --simp only [symm M]
 
       have M_image_cpt : @IsCompact X (ourTopologicalSpace gs) (M) := by
-        rw [@isCompact_iff_finite_subcover]
-        have M_cpt_X := @IsClosed.isCompact X t₀ M
+        have M_cpt_X := @IsClosed.isCompact X t₀ M CompactSpace_t₀ M_closed
         simp_all only [ne_eq, Set.preimage_id_eq, id_eq, implies_true]
-
-      specialize this M
+        rw [@isCompact_iff_finite_subcover] at *
+        intro I c_elem c_elem_open set_in_inter
+        specialize M_cpt_X c_elem
+        refine IsCompact.elim_finite_subcover ?hs c_elem ?hUo set_in_inter
+        · exact IsClosed.isCompact M_closed
+        · intro i
+          apply this
+          exact c_elem_open i
       simp only [Set.preimage_id_eq, id_eq] at *
-      specialize blah M
       have := @IsCompact.isClosed X (ourTopologicalSpace gs) (?_) M M_image_cpt
       exact this
       · rw [t2Space_iff]
@@ -371,6 +392,88 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
 
 
           · exact USize.size
+        let U := {z | ourMetric gs x z < d / 2}
+        let V := {z | ourMetric gs y z < d / 2}
+        have U_open : @IsOpen X (ourTopologicalSpace gs) U := by
+          intro z hz
+          use d / 2 - ourMetric gs x z
+          constructor
+          · simp only [gt_iff_lt, sub_pos]
+            exact hz
+          · intro w hw
+            have h_triangle : ourMetric gs x w ≤ ourMetric gs x z + ourMetric gs z w := by exact
+              ourMetric_triangle
+            have h_bound : ourMetric gs x w < d / 2 := by linarith [h_triangle, hw]
+            simp only [U, Set.mem_setOf_eq]
+            exact h_bound
+
+        have V_open : @IsOpen X (ourTopologicalSpace gs) V := by
+          intro z hz
+          use d / 2 - ourMetric gs y z
+          constructor
+          · simp only [gt_iff_lt, sub_pos]
+            exact hz
+          · intro w hw
+            have h_triangle : ourMetric gs y w ≤ ourMetric gs y z + ourMetric gs z w := by exact
+              ourMetric_triangle
+            have h_bound : ourMetric gs y w < d / 2 := by linarith [h_triangle, hw]
+            simp only [V, Set.mem_setOf_eq]
+            exact h_bound
+        use U, V
+        refine ⟨U_open, V_open, ?_, ?_⟩
+        · simp [U]
+          rw [ourMetric_self]
+          · linarith
+          · rfl
+        · constructor
+          · simp [V]
+            rw [ourMetric_self]
+            · linarith
+            · rfl
+          · have disjoint {a : Set X} {b : Set X} : a ∩ b = ∅ ↔ ∀ t, t ∈ a → t ∉ b := by
+              constructor
+              intro h
+              intros z hzU hzV
+              have := @Set.mem_inter_iff X z a b
+              simp_all only [ne_eq, Set.mem_empty_iff_false, and_self, iff_true]
+
+              intro h
+              simp_all only [ne_eq]
+              ext1 x
+              simp_all only [Set.mem_inter_iff, Set.mem_empty_iff_false, iff_false, not_and, not_false_eq_true, implies_true]
+
+            rw [Set.disjoint_iff]
+            simp only [Set.subset_empty_iff]
+            rw [disjoint]
+            intro t t_in_U
+            simp_all only [ne_eq, implies_true, Set.mem_setOf_eq, not_lt, d, U, V]
+            have blah : ourMetric gs x y ≤ ourMetric gs t y + ourMetric gs x t := by
+              rw [add_comm]
+              exact ourMetric_triangle
+
+            --simp at this --using [t_in_U]
+            have boo := LT.lt.le t_in_U
+            --apply ourMetric_comm at boo
+            have hmm := @le_add_of_le_add_left ℝ _ _ _ (ourMetric gs x y) (ourMetric gs t y) (ourMetric gs x t) (ourMetric gs x y / 2) blah boo
+            --have : 0 ≤ ourMetric gs t y := by sorry
+            have haa := @sub_le_sub_right ℝ _ _ _ (ourMetric gs x y) (ourMetric gs t y + ourMetric gs x y / 2) (hmm) (ourMetric gs x y / 2)
+            have heh : ourMetric gs x y / 2 - ourMetric gs x y / 2 = 0 := by
+              exact @sub_self ℝ _ (ourMetric gs x y / 2)
+            have : ourMetric gs x y - ourMetric gs x y / 2 = ourMetric gs x y / 2 := by
+              exact sub_half (ourMetric gs x y)
+            rw [this] at haa
+
+            simp [add_assoc, heh] at haa
+            nth_rewrite 2 [ourMetric_comm]
+            exact haa
+
+
+    exact this
+  rw [@continuous_iff_isClosed X X (@ourTopologicalSpace X E _ gs) t₀ id]
+  exact fun s a ↦ this s a
+
+
+
     --have s_cpt_X := IsClosed.isCompact s_closed
   --   rw [isCompact_iff_finite_subcover] at s_cpt_X
   --   have open_preimage s : IsOpen s → IsOpen (metricCopy.mk X gs gs_sep ⁻¹' s) :=
@@ -385,8 +488,8 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
   --   exact closed_preimage_s
   -- exact continuous_iff_isClosed.mpr closed_impl
 
-  sorry
 
+example (a b c d : ℝ) (h1 : a < b + c) (h2: b < d) : a ≤ d + c :=  by apply?
 
 
 noncomputable def homeomorph_OurMetric :
