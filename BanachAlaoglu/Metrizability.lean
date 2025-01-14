@@ -290,8 +290,9 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
       simp_all only [ne_eq, gt_iff_lt, eq_iff_iff, Set.preimage_id_eq, id_eq, t]
       specialize h_metric
 
-      have := @continuous_ourMetric' X E _ gs
+      have := @continuous_ourMetric' X E _ gs t₀
       let dist_fun : X → ℝ := fun y ↦ ourMetric gs x y
+      --have : Continuous
       have dist_cont : @Continuous X ℝ t₀ _ dist_fun := by
         simp [dist_fun]
 
@@ -331,18 +332,27 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
 
 --#check Continuous[t₀, ourTopologicalSpace]
 
+/-lemma continuous_metricCopy_toOrigin (gs_continuous : ∀ n, Continuous (gs n)) :
+    Continuous (metricCopy.toOrigin X gs gs_sep) := by
+  have symm (s : Set X) : metricCopy.toOrigin X gs gs_sep ⁻¹' s = metricCopy.mk X gs gs_sep '' s :=
+    Eq.symm (Set.EqOn.image_eq_self fun ⦃x⦄ ↦ congrFun rfl)
+  have closed_impl (s : Set X) : IsClosed s → IsClosed (metricCopy.toOrigin X gs gs_sep ⁻¹' s) := by
+    intro s_closed
+    have s_cpt_X := IsClosed.isCompact s_closed
+    rw [isCompact_iff_finite_subcover] at s_cpt_X
+    have open_preimage s : IsOpen s → IsOpen (metricCopy.mk X gs gs_sep ⁻¹' s) :=
+      continuous_def.mp (continuous_metricCopy_mk gs_sep gs_continuous) s
+    have closed_preimage_s : IsClosed (metricCopy.toOrigin X gs gs_sep ⁻¹' s) := by
+      have s_image_cpt : IsCompact (metricCopy.mk X gs gs_sep '' s) := by
+        apply isCompact_of_finite_subcover
+        intro _ Us Usi_open
+        simp only [metricCopy.mk, id_eq, Set.image_id']
+        exact fun a ↦ s_cpt_X Us (fun i ↦ open_preimage (Us i) (Usi_open i)) a
+      simpa [symm s] using IsCompact.isClosed s_image_cpt
+    exact closed_preimage_s
+  exact continuous_iff_isClosed.mpr closed_impl-/
+
 lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀ id := by
-  --have ourTopo := @ourTopologicalSpace X E _ gs
-
-
-  --have symm (s : Set X) : continuous_toOrigin X gs gs_sep ⁻¹' s = metricCopy.mk X gs gs_sep '' s :=
-    --Eq.symm (Set.EqOn.image_eq_self fun ⦃x⦄ ↦ congrFun rfl)
-  --have closed_impl (s : Set X) : IsClosed s → IsClosed (id ⁻¹' s) := by
-    --intro s_closed
-    --exact s_closed
-
-
-  --have := continuous_iff_isClosed.mpr closed_impl
   have : ∀ (s : Set X), @IsClosed X t₀ s → @IsClosed X (ourTopologicalSpace gs) (id ⁻¹'s) := by
     intro M M_closed
     --have M_cpt_X := @IsClosed.isCompact --M_closed
@@ -356,8 +366,6 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
       exact this
 
     have : @IsClosed X (ourTopologicalSpace gs) (id ⁻¹' M) := by
-      --simp only [symm M]
-
       have M_image_cpt : @IsCompact X (ourTopologicalSpace gs) (M) := by
         have M_cpt_X := @IsClosed.isCompact X t₀ M CompactSpace_t₀ M_closed
         simp_all only [ne_eq, Set.preimage_id_eq, id_eq, implies_true]
@@ -375,30 +383,12 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
       · rw [t2Space_iff]
         intro x y x_ne_y
         let d := ourMetric gs x y
-        have d_pos : 0 < d := by
+        have d_nonneg : 0 ≤ d := by
           unfold_let
           rw [ourMetric]
-          apply tsum_pos
-          · exact summable_if_bounded
+          apply tsum_nonneg
           · intro i
             positivity
-          · have (a b : ℝ) ( ha : a > 0) (hb :b > 0) : a * b > 0 := by
-              exact Real.mul_pos ha hb
-            apply Real.mul_pos
-            · positivity
-            · simp only [lt_min_iff, dist_pos, zero_lt_one, and_true]
-              have : ∀ i : ℕ, x = y ↔ gs i x = gs i y := by
-                intro i
-                constructor
-                · exact fun a ↦ congrArg (gs i) a
-                · intro ne_eq
-                  rw []
-
-                  sorry
-              sorry
-
-
-          · exact USize.size
         let U := {z | ourMetric gs x z < d / 2}
         let V := {z | ourMetric gs y z < d / 2}
         have U_open : @IsOpen X (ourTopologicalSpace gs) U := by
@@ -430,7 +420,25 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
         refine ⟨U_open, V_open, ?_, ?_⟩
         · simp [U]
           rw [ourMetric_self]
-          · linarith
+          · have : x ≠ y → ourMetric gs x y > 0 := by
+              intro x_ne_y
+              rw[ourMetric]
+              apply tsum_pos
+              ·  exact summable_if_bounded
+              · intro i
+                positivity
+              · have (a b : ℝ) ( ha : a > 0) (hb :b > 0) : a * b > 0 := by
+                  exact Real.mul_pos ha hb
+                apply Real.mul_pos
+                · positivity
+                ·
+
+                  sorry
+
+
+              · exact USize.size
+
+            linarith
           · rfl
         · constructor
           · simp [V]
