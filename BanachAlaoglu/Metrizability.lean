@@ -386,8 +386,15 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
               exact Real.mul_pos ha hb
             apply Real.mul_pos
             · positivity
-            ·
+            · simp only [lt_min_iff, dist_pos, zero_lt_one, and_true]
+              have : ∀ i : ℕ, x = y ↔ gs i x = gs i y := by
+                intro i
+                constructor
+                · exact fun a ↦ congrArg (gs i) a
+                · intro ne_eq
+                  rw []
 
+                  sorry
               sorry
 
 
