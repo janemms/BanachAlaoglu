@@ -222,7 +222,7 @@ noncomputable def ourTopologicalSpace : TopologicalSpace X where
 def t₀ := TopologicalSpace X
 variable (t₀ : TopologicalSpace X) (CompactSpace_t₀ : @CompactSpace X t₀)
 --instance CompactSpace_t₀ : @CompactSpace X t₀ := by
-
+variable (gs_continuous : ∀ n, Continuous (gs n))
 
 
 
@@ -249,7 +249,7 @@ lemma continuous_ourMetric (gs_continuous : ∀ n, Continuous (gs n)) :
 
 #check (@instTopologicalSpaceProd X X (@ourTopologicalSpace X E _ gs) (@ourTopologicalSpace X E _ gs))
 #check @dist X
-#check @Continuous (X × X) ℝ (@instTopologicalSpaceProd X X (@ourTopologicalSpace X E _ gs) (@ourTopologicalSpace X E _ gs)) _ (fun (p : X × X) ↦ dist (p.1) (p.2))
+--#check @Continuous (X × X) ℝ (@instTopologicalSpaceProd X X (@ourTopologicalSpace X E _ gs) (@ourTopologicalSpace X E _ gs)) _ (fun (p : X × X) ↦ dist (p.1) (p.2))
 
 lemma continuous_ourMetric' (gs_continuous : ∀ n, Continuous (gs n)) :
     Continuous  (fun (p : X × X) ↦ ourMetric gs (p.1) (p.2)) := by
@@ -259,16 +259,7 @@ lemma continuous_ourMetric' (gs_continuous : ∀ n, Continuous (gs n)) :
 #check (@Metric.continuous_iff' X X)
 #check continuous_def
 lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id := by
-  --have := @ourPseudoMetricSpace X E _ gs
-  --have := @ourTopologicalSpace X E _ gs
-  --have := (@continuous_iff_continuous_dist X X _ _ id).mpr --ourPseudoMetricSpace
-
---  have := (@Metric.continuous_iff' X X (@ourPseudoMetricSpace X E _ gs) t₀ id).mpr
-
- --simp_all only [id_eq, gt_iff_lt]
-
   rw [continuous_def]
-
   intro s s_open
   have : @IsOpen X (ourTopologicalSpace gs) s = ∀ x ∈ s, ∃ ε > 0, ∀ (y : X), ourMetric gs x y < ε → y ∈ s := by
     exact rfl
@@ -280,13 +271,9 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
   let t := { y | ourMetric gs x y < ε }
   use t
   constructor
-  · intros y hy
-    simp only [Set.mem_preimage]
-    exact h_metric y hy
-
+  · exact h_metric
   · constructor
-    ·
-      have metric_cont := continuous_ourMetric gs t₀
+    · have metric_cont := continuous_ourMetric gs t₀
       simp_all only [ne_eq, gt_iff_lt, eq_iff_iff, Set.preimage_id_eq, id_eq, t]
       specialize h_metric
 
@@ -294,12 +281,9 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
       let dist_fun : X → ℝ := fun y ↦ ourMetric gs x y
       --have : Continuous
       have dist_cont : @Continuous X ℝ t₀ _ dist_fun := by
-        simp [dist_fun]
-
-
-        sorry
+        unfold_let
+        exact @Continuous.along_snd X X ℝ _ _ _ (fun (p : X × X) ↦ ourMetric gs p.1 p.2) (continuous_ourMetric gs t₀ gs_continuous) x
       exact dist_cont.isOpen_preimage (Set.Iio ε) (@isOpen_Iio _ _ _ _ ε)
-
     · have x_in_t : x ∈ t := by
         simp [t]
         have metric_self : ourMetric gs x x = 0 := by
@@ -359,8 +343,7 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
     --rw [isCompact_iff_finite_subcover] at M_cpt_X
     have : ∀ s : Set X, @IsOpen X (ourTopologicalSpace gs) s → @IsOpen X t₀ (id ⁻¹' s) := by
       intro s
-      have := continuous_mk gs
-      specialize this t₀
+      have := continuous_mk gs t₀ gs_continuous
       rw [continuous_def] at this
       specialize this s
       exact this
