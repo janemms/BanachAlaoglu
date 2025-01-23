@@ -293,48 +293,6 @@ lemma continuous_mk : @Continuous X X t₀ (@ourTopologicalSpace X E _ gs) id :=
       exact x_in_t
 
 
-  -- Use the fact that `ourMetric gs x x = 0`
-
-  --intro x ε hε
-  --have cont_dist : Continuous (fun y ↦ dist (kopio.mk X gs gs_sep y)
-    --  (kopio.mk X gs gs_sep x)) := by
-    --apply Continuous.along_fst (cont_ourMetric' gs_sep gs_cont)
-
---  have interval_open : IsOpen (Set.Iio ε) := by exact isOpen_Iio
-  --have := @IsOpen.mem_nhds X x _ _ (cont_dist.isOpen_preimage _ interval_open) (by simpa using hε)
-  --filter_upwards [this] with y hy using hy
-
-  --apply continuous_def.mpr
-  --intro s s_open
-
-
-
-  --have := @continuous_id X _
-
-
---lemma continuous_function : Continuous[t₀, ourTopologicalSpace] id := by sorry
-
---#check Continuous[t₀, ourTopologicalSpace]
-
-/-lemma continuous_metricCopy_toOrigin (gs_continuous : ∀ n, Continuous (gs n)) :
-    Continuous (metricCopy.toOrigin X gs gs_sep) := by
-  have symm (s : Set X) : metricCopy.toOrigin X gs gs_sep ⁻¹' s = metricCopy.mk X gs gs_sep '' s :=
-    Eq.symm (Set.EqOn.image_eq_self fun ⦃x⦄ ↦ congrFun rfl)
-  have closed_impl (s : Set X) : IsClosed s → IsClosed (metricCopy.toOrigin X gs gs_sep ⁻¹' s) := by
-    intro s_closed
-    have s_cpt_X := IsClosed.isCompact s_closed
-    rw [isCompact_iff_finite_subcover] at s_cpt_X
-    have open_preimage s : IsOpen s → IsOpen (metricCopy.mk X gs gs_sep ⁻¹' s) :=
-      continuous_def.mp (continuous_metricCopy_mk gs_sep gs_continuous) s
-    have closed_preimage_s : IsClosed (metricCopy.toOrigin X gs gs_sep ⁻¹' s) := by
-      have s_image_cpt : IsCompact (metricCopy.mk X gs gs_sep '' s) := by
-        apply isCompact_of_finite_subcover
-        intro _ Us Usi_open
-        simp only [metricCopy.mk, id_eq, Set.image_id']
-        exact fun a ↦ s_cpt_X Us (fun i ↦ open_preimage (Us i) (Usi_open i)) a
-      simpa [symm s] using IsCompact.isClosed s_image_cpt
-    exact closed_preimage_s
-  exact continuous_iff_isClosed.mpr closed_impl-/
 
 lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀ id := by
   have : ∀ (s : Set X), @IsClosed X t₀ s → @IsClosed X (ourTopologicalSpace gs) (id ⁻¹'s) := by
@@ -386,6 +344,24 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
             have h_bound : ourMetric gs x w < d / 2 := by linarith [h_triangle, hw]
             simp only [U, Set.mem_setOf_eq]
             exact h_bound
+        have ne_imp_pos : x ≠ y → ourMetric gs x y > 0 := by
+              intro x_ne_y
+              rw[ourMetric]
+              have := gs_sep x_ne_y
+              obtain ⟨n, neq⟩  := this
+
+              apply tsum_pos summable_if_bounded (by intro i; positivity) n
+
+
+              · have (a b : ℝ) ( ha : a > 0) (hb :b > 0) : a * b > 0 := by
+                  exact Real.mul_pos ha hb
+                apply Real.mul_pos
+                · positivity
+                · simp only [lt_min_iff, dist_pos, zero_lt_one, and_true]
+                  exact neq
+
+
+
 
         have V_open : @IsOpen X (ourTopologicalSpace gs) V := by
           intro z hz
@@ -403,30 +379,21 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
         refine ⟨U_open, V_open, ?_, ?_⟩
         · simp [U]
           rw [ourMetric_self]
-          · have : x ≠ y → ourMetric gs x y > 0 := by
-              intro x_ne_y
-              rw[ourMetric]
-              apply tsum_pos
-              ·  exact summable_if_bounded
-              · intro i
-                positivity
-              · have (a b : ℝ) ( ha : a > 0) (hb :b > 0) : a * b > 0 := by
-                  exact Real.mul_pos ha hb
-                apply Real.mul_pos
-                · positivity
-                ·
+          ·
 
-                  sorry
+            simp only [Nat.ofNat_pos, div_pos_iff_of_pos_right, gt_iff_lt]
+            simp [d]
+            apply ne_imp_pos
+            exact x_ne_y
 
-
-              · exact USize.size
-
-            linarith
           · rfl
         · constructor
           · simp [V]
             rw [ourMetric_self]
-            · linarith
+            · simp only [Nat.ofNat_pos, div_pos_iff_of_pos_right, gt_iff_lt]
+              simp [d]
+              apply ne_imp_pos
+              exact x_ne_y
             · rfl
           · have disjoint {a : Set X} {b : Set X} : a ∩ b = ∅ ↔ ∀ t, t ∈ a → t ∉ b := by
               constructor
@@ -470,23 +437,6 @@ lemma continuous_toOrigin : @Continuous X X (@ourTopologicalSpace X E _ gs) t₀
   rw [@continuous_iff_isClosed X X (@ourTopologicalSpace X E _ gs) t₀ id]
   exact fun s a ↦ this s a
 
-
-
-    --have s_cpt_X := IsClosed.isCompact s_closed
-  --   rw [isCompact_iff_finite_subcover] at s_cpt_X
-  --   have open_preimage s : IsOpen s → IsOpen (metricCopy.mk X gs gs_sep ⁻¹' s) :=
-  --     continuous_def.mp (continuous_metricCopy_mk gs_sep gs_continuous) s
-  --   have closed_preimage_s : IsClosed (metricCopy.toOrigin X gs gs_sep ⁻¹' s) := by
-  --     have s_image_cpt : IsCompact (metricCopy.mk X gs gs_sep '' s) := by
-  --       apply isCompact_of_finite_subcover
-  --       intro _ Us Usi_open
-  --       simp only [metricCopy.mk, id_eq, Set.image_id']
-  --       exact fun a ↦ s_cpt_X Us (fun i ↦ open_preimage (Us i) (Usi_open i)) a
-  --     simpa [symm s] using IsCompact.isClosed s_image_cpt
-  --   exact closed_preimage_s
-  -- exact continuous_iff_isClosed.mpr closed_impl
-
-
 example (a b c d : ℝ) (h1 : a < b + c) (h2: b < d) : a ≤ d + c :=  by apply?
 
 
@@ -506,12 +456,23 @@ lemma equal : t₀ = (@ourTopologicalSpace X E _ gs) := by
   have too := @continuous_toOrigin X E _ gs
   intro s
   constructor
-  · specialize too t₀
+  · specialize too gs_sep t₀ CompactSpace_t₀
+    --simp [continuous_def] at too
+
+    specialize too gs_continuous
     simp [continuous_def] at too
     exact too s
+    --exact too s
+
   · specialize mk t₀
+    specialize mk gs_continuous
+
+
     simp [continuous_def] at mk
+
     exact mk s
+
+
 
 
 /- If X is compact, and there exists a seq of continuous real-valued functions that
@@ -521,7 +482,9 @@ lemma X_metrizable (gs : ∀ n, X → E n) (gs_continuous : ∀ n, Continuous (g
     TopologicalSpace.MetrizableSpace X := by
     have hom := (@Homeomorph X X t₀ (@ourTopologicalSpace X E _ gs))
     use ourMetricSpace gs gs_sep
+
     have : (@ourPseudoMetricSpace X E _ gs).toUniformSpace.toTopologicalSpace = ourTopologicalSpace gs := by
+
       --exact equal gs UniformSpace.toTopologicalSpace
       sorry
 
