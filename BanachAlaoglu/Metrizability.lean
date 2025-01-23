@@ -457,19 +457,13 @@ lemma equal : t₀ = (@ourTopologicalSpace X E _ gs) := by
   intro s
   constructor
   · specialize too gs_sep t₀ CompactSpace_t₀
-    --simp [continuous_def] at too
-
     specialize too gs_continuous
     simp [continuous_def] at too
     exact too s
-    --exact too s
 
   · specialize mk t₀
     specialize mk gs_continuous
-
-
     simp [continuous_def] at mk
-
     exact mk s
 
 
@@ -480,18 +474,38 @@ separates points on X, then X is metrizable. -/
 lemma X_metrizable (gs : ∀ n, X → E n) (gs_continuous : ∀ n, Continuous (gs n))
     (gs_sep : (∀ ⦃x y⦄, x≠y → ∃ n, gs n x ≠ gs n y)) :
     TopologicalSpace.MetrizableSpace X := by
+    letI : MetricSpace X := ourMetricSpace gs gs_sep --TopologicalSpace.metrizableSpaceMetric
+    use this
     have hom := (@Homeomorph X X t₀ (@ourTopologicalSpace X E _ gs))
-    use ourMetricSpace gs gs_sep
+
+    --use ourMetricSpace gs gs_sep
 
     have : (@ourPseudoMetricSpace X E _ gs).toUniformSpace.toTopologicalSpace = ourTopologicalSpace gs := by
+      --refine equal gs gs_sep --UniformSpace.toTopologicalSpace ?CompactSpace_t₀ ?gs_continuous
+      refine equal gs gs_sep UniformSpace.toTopologicalSpace ?CompactSpace_t₀ ?gs_continuous
 
-      --exact equal gs UniformSpace.toTopologicalSpace
-      sorry
+      --have := (@ourPseudoMetricSpace X E _ gs).toUniformSpace
+      --have := @UniformSpace.toTopologicalSpace X this
+      --have := equal gs gs_sep t₀ CompactSpace_t₀ gs_continuous
+      --rw [← this]
+      --refine TopologicalSpace.ext_iff.mpr ?_
+
+      ·
+
+        sorry
+
+
+
+      ·
+
+        sorry
 
 
 --have := hom.embedding.metrizableSpace
 
-    sorry
+    rw [this]
+    exact Eq.symm (equal gs gs_sep t₀ CompactSpace_t₀ gs_continuous)
+
     --(homeomorph_OurMetric gs_continuous gs_sep).embedding.metrizableSpace
 
 --end Metrizable_of_compactSpace
